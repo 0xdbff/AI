@@ -1,5 +1,8 @@
 src/website/public/images/
 
+.ipynb_checkpoints/
+
+
 /media/*
 /src/media/*
 !/media/MEDIA_FILES_GOTO_HERE
