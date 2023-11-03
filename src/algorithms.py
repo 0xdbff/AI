@@ -43,6 +43,8 @@ class Search:
             print("Solution found with: ", self.cost, " cost")
             print("Search Time: ", self.search_time)
             print("Total Time: ", self.search_time + self.cost, " with ", a_type)
+        else:
+            print("No path is available!")
 
     def _run(self):
         """ """

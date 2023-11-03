@@ -22,7 +22,13 @@ class Environment:
 
         self.map = np.zeros((self.rows, self.cols), dtype=np.int8)
 
-        self._create_with_patterns() if w_type.Regular else self._create_random()
+        match w_type:
+            case WarehouseTypeEnum.Regular:
+                self._create_with_patterns()
+            case WarehouseTypeEnum.Random:
+                self._create_random()
+            case _:
+                raise ValueError(f"Unknown Environment type: {w_type}")
         self._position_robot_and_package()
 
     def _position_robot_and_package(self):
@@ -37,15 +43,37 @@ class Environment:
     def _create_random(self):
         """ """
 
-        # Identify all available positions for obstacles
-        free_spaces = np.column_stack(np.where(self.map == 0))
+        def is_space_free(row, col, size):
+            if col + size > self.cols:
+                return False
+            for i in range(size):
+                if self.map[row][col + i] != 0:
+                    return False
+            return True
 
-        # Randomly choose positions for obstacles
-        for _ in range(min(self.obstacles, free_spaces.shape[0])):
-            idx = random.randrange(free_spaces.shape[0])
-            r, c = free_spaces[idx]
-            self.map[r, c] = -1
-            free_spaces = np.delete(free_spaces, idx, 0)
+        def place_obstacle(row, col, size):
+            for i in range(size):
+                self.map[row][col + i] = -1
+
+        obstacle_sizes = [
+            1,
+            int(self.rows / 6.0),
+            int(self.rows / 8.0),
+            int(self.rows / 16.0),
+            int(self.rows / 32.0),
+        ]
+
+        for _ in range(self.obstacles):
+            obstacle_placed = False
+            while not obstacle_placed:
+                r, c = random.randint(0, self.rows - 1), random.randint(
+                    0, self.cols - 1
+                )
+                size = random.choice(obstacle_sizes)
+
+                if is_space_free(r, c, size):
+                    place_obstacle(r, c, size)
+                    obstacle_placed = True
 
     def _create_with_patterns(self):
         """ """
