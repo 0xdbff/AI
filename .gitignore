@@ -2,6 +2,8 @@ src/website/public/images/
 
 .ipynb_checkpoints/
 
+venv/
+
 
 /media/*
 /src/media/*

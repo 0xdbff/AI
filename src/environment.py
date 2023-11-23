@@ -22,13 +22,19 @@ class Environment:
 
         self.map = np.zeros((self.rows, self.cols), dtype=np.int8)
 
-        match w_type:
-            case WarehouseTypeEnum.Regular:
-                self._create_with_patterns()
-            case WarehouseTypeEnum.Random:
-                self._create_random()
-            case _:
-                raise ValueError(f"Unknown Environment type: {w_type}")
+        # match w_type:
+        #     case WarehouseTypeEnum.Regular:
+        #         self._create_with_patterns()
+        #     case WarehouseTypeEnum.Random:
+        #         self._create_random()
+        #     case _:
+        #         raise ValueError(f"Unknown Environment type: {w_type}")
+        if (w_type is WarehouseTypeEnum.Regular):
+            self._create_with_patterns()
+        elif (w_type is WarehouseTypeEnum.Random):
+            self._create_random()
+        else:
+            raise ValueError(f"Unknown Environment type: {w_type}")
         self._position_robot_and_package()
 
     def _position_robot_and_package(self):

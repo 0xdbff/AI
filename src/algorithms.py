@@ -27,24 +27,39 @@ class Search:
         self.algorithm = None
         self.path = None
 
-        match a_type:
-            case AlgorithmTypeEnum.BFS:
-                self.algorithm = self._bfs_search
-            case AlgorithmTypeEnum.A_STAR:
-                self.algorithm = self._a_star_search
-            case AlgorithmTypeEnum.GREEDY:
-                self.algorithm = self._a_star_search
-            case _:
-                raise ValueError(f"Unknown AlgorithmType: {a_type}")
+        # match a_type:
+        #     case AlgorithmTypeEnum.BFS:
+        #         self.algorithm = self._bfs_search
+        #     case AlgorithmTypeEnum.A_STAR:
+        #         self.algorithm = self._a_star_search
+        #     case AlgorithmTypeEnum.GREEDY:
+        #         self.algorithm = self._a_star_search
+        #     case _:
+        #         raise ValueError(f"Unknown AlgorithmType: {a_type}")
+
+        if (a_type is AlgorithmTypeEnum.BFS):
+            self.algorithm = self._bfs_search
+            
+        elif (a_type is AlgorithmTypeEnum.A_STAR):
+            self.algorithm = self._a_star_search
+            
+        elif (a_type is AlgorithmTypeEnum.GREEDY):
+            self.algorithm = self._a_star_search
+            
+        else:
+            raise ValueError(f"Unknown AlgorithmType: {a_type}")
 
         self._run()
 
         if self.path:
-            print("Solution found with: ", self.cost, " cost")
-            print("Search Time: ", self.search_time)
-            print("Total Time: ", self.search_time + self.cost, " with ", a_type)
+            self.total_search_time = self.search_time + self.cost
         else:
             print("No path is available!")
+
+    def print_cost():
+        print("Solution found with: ", self.cost, " cost")
+        print("Search Time: ", self.search_time)
+        print("Total Time: ", self.search_time + self.cost, " with ", a_type)
 
     def _run(self):
         """ """
