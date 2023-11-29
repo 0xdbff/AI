@@ -1,16 +1,16 @@
+#include <cfloat>
 #include <cstdint>
 #include <cuda_runtime.h>
 #include <fstream>
 #include <iostream>
 // #include <limits>
-#include <cfloat>
 #include <random>
 #include <utility>
 #include <vector>
 
 // Node structure for A* algorithm
 struct Node {
-  int8_t x, y; // Coordinates
+  int x, y; // Coordinates
   float gCost, hCost, fCost;
   Node *parent;
 
@@ -20,9 +20,13 @@ struct Node {
         parent(nullptr) {}
 };
 
+__device__ float manhattanDistance(int x1, int y1, int x2, int y2) {
+  return abs(x1 - x2) + abs(y1 - y2);
+}
+
 const int patternSize = 10;
 const int numPatterns = 4;
-int8_t patterns[numPatterns][patternSize][patternSize] = {
+int patterns[numPatterns][patternSize][patternSize] = {
     // pattern 1
     {{0, 0, 0, -1, 0, 0, -1, 0, 0, 0},
      {0, -1, 0, 0, -1, 0, 0, -1, 0, 0},
