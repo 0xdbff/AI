@@ -16,6 +16,8 @@ venv/
 !/static/STATIC_FILES_GOTO_HERE
 !/src/static/STATIC_FILES_GOTO_HERE_DEVELOPMENT
 
+.virtual_documents/
+
 # globs
 Makefile.in
 *.userprefs

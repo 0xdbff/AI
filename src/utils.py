@@ -6,13 +6,13 @@ import numpy as np
 def visualize_warehouse(warehouse, path=None):
     fig, ax = plt.subplots(figsize=(10, 10))
 
-    fig.patch.set_facecolor("#22272e")
-    ax.set_facecolor("#22272e")
+    fig.patch.set_facecolor("#212121")
+    ax.set_facecolor("#212121")
 
     # Convert the warehouse matrix into a numpy array
     warehouse_np = np.array(warehouse)
 
-    cmap = mcolors.ListedColormap(["#000000", "#282c34"])
+    cmap = mcolors.ListedColormap(["#000000", "#212121"])
     ax.imshow(warehouse_np, cmap=cmap, aspect="equal")
 
     if path:
@@ -28,6 +28,6 @@ def visualize_warehouse(warehouse, path=None):
             xs[-1], ys[-1], "E", ha="center", va="center", color="white", fontsize=12
         )
 
-    ax.grid(which="both", color="#22272e", linestyle="-", linewidth=1)
+    ax.grid(which="both", color="#212121", linestyle="-", linewidth=1)
 
     plt.show()
