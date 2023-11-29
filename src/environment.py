@@ -13,7 +13,14 @@ class WarehouseTypeEnum(Enum):
 class Environment:
     """ """
 
-    def __init__(self, w_type: WarehouseTypeEnum, rows, cols, obstacle_count=0):
+    def __init__(
+        self,
+        w_type: WarehouseTypeEnum,
+        rows,
+        cols,
+        obstacle_count=0,
+        save_fn: None | str = None,
+    ):
         """ """
 
         self.cols = cols
@@ -22,13 +29,16 @@ class Environment:
 
         self.map = np.zeros((self.rows, self.cols), dtype=np.int8)
 
-        if (w_type is WarehouseTypeEnum.Regular):
+        if w_type is WarehouseTypeEnum.Regular:
             self._create_with_patterns()
-        elif (w_type is WarehouseTypeEnum.Random):
+        elif w_type is WarehouseTypeEnum.Random:
             self._create_random()
         else:
             raise ValueError(f"Unknown Environment type: {w_type}")
         self._position_robot_and_package()
+
+        if save_fn:
+            self._save_to_file(save_fn)
 
     def _position_robot_and_package(self):
         """ """
@@ -94,3 +104,7 @@ class Environment:
                 end_j = min(j + 10, self.cols)
 
                 self.map[i:end_i, j:end_j] = selected_pattern[: end_i - i, : end_j - j]
+
+    def _save_to_file(self, filename):
+        """Save the environment map to a file."""
+        np.savetxt("envs/" + filename, self.map, fmt="%d", delimiter=",")
