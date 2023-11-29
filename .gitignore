@@ -4,6 +4,8 @@ src/website/public/images/
 
 venv/
 
+src_cuda/*.out
+
 
 /media/*
 /src/media/*
