@@ -171,7 +171,7 @@ int main() {
   std::srand(static_cast<unsigned int>(time(nullptr)));
 
   Environment env(500, 500);
-  env.saveToFile("../wharehouse_ex/500_500.csv");
+  env.saveToFile("../../wharehouse_ex/500_500.csv");
 
   env.positionRobotAndPackage();
   env.printRobotAndPackagePosition();

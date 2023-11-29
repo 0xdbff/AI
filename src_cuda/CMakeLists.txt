@@ -7,7 +7,7 @@ set(CMAKE_PREFIX_PATH "${CUDA_TOOLKIT_ROOT_DIR};${CMAKE_PREFIX_PATH}")
 set(CMAKE_CUDA_ARCHITECTURES 75)
 include_directories(${CMAKE_SOURCE_DIR})
 
-set(PROJECT_SOURCES main.cc)
+set(PROJECT_SOURCES main.cu)
 
 # Create the executable
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
