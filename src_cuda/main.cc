@@ -1,6 +1,7 @@
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <random>
+#include <utility>
 #include <vector>
 
 const int patternSize = 10;
@@ -73,15 +74,6 @@ public:
     }
   }
 
-  void printMap() {
-    for (const auto &row : map) {
-      for (int cell : row) {
-        std::cout << cell << " ";
-      }
-      std::cout << std::endl;
-    }
-  }
-
   void saveToFile(const std::string &filename) {
     std::ofstream file(filename);
     if (!file.is_open()) {
@@ -99,16 +91,53 @@ public:
     }
   }
 
+  void positionRobotAndPackage() {
+    std::vector<std::pair<int, int>> freeSpaces;
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j) {
+        if (map[i][j] == 0) {
+          freeSpaces.emplace_back(i, j);
+        }
+      }
+    }
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(0, freeSpaces.size() - 1);
+
+    // Randomly select two different positions for the robot and the package
+    int index1 = distrib(gen);
+    int index2 = distrib(gen);
+    while (index1 == index2) {
+      index2 = distrib(gen); // Ensure different positions
+    }
+
+    robotPos = freeSpaces[index1];
+    packagePos = freeSpaces[index2];
+  }
+
+  void printRobotAndPackagePosition() {
+    std::cout << "Robot Position: (" << robotPos.first << ", "
+              << robotPos.second << ")\n";
+    std::cout << "Package Position: (" << packagePos.first << ", "
+              << packagePos.second << ")\n";
+  }
+
 private:
   int rows, cols;
   std::vector<std::vector<int>> map;
+  std::pair<int, int> robotPos;
+  std::pair<int, int> packagePos;
 };
 
 int main() {
   std::srand(static_cast<unsigned int>(time(nullptr)));
 
   Environment env(500, 500);
-  env.saveToFile("file.txt");
+  env.saveToFile("../wharehouse_ex/500_500.csv");
+
+  env.positionRobotAndPackage();
+  env.printRobotAndPackagePosition();
 
   return 0;
 }

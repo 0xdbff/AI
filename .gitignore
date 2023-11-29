@@ -6,7 +6,7 @@ venv/
 
 src_cuda/*.out
 
-
+/src_cuda/build
 /media/*
 /src/media/*
 !/media/MEDIA_FILES_GOTO_HERE
