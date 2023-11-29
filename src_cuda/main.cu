@@ -40,6 +40,22 @@ __global__ void initializeNodesKernel(Node *d_nodes, int rows, int cols) {
   }
 }
 
+__global__ void aStarKernel(Node *d_nodes, int rows, int cols, int targetX,
+                            int targetY) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int idy = blockIdx.y * blockDim.y + threadIdx.y;
+
+  if (idx < cols && idy < rows) {
+    int index = idy * cols + idx;
+    d_nodes[index].x = idx;
+    d_nodes[index].y = idy;
+    d_nodes[index].gCost = FLT_MAX;
+    d_nodes[index].hCost = manhattanDistance(idx, idy, targetX, targetY);
+    d_nodes[index].fCost = FLT_MAX;
+    d_nodes[index].parent = nullptr;
+  }
+}
+
 const int patternSize = 10;
 const int numPatterns = 4;
 int patterns[numPatterns][patternSize][patternSize] = {
@@ -95,6 +111,8 @@ public:
   //   map.resize(rows, std::vector<int>(cols, 0));
   //   createWithPatterns();
   // }
+  std::pair<int, int> robotPos;
+  std::pair<int, int> packagePos;
 
   Environment(int rows, int cols) : rows(rows), cols(cols) {
     map.resize(rows, std::vector<int8_t>(cols, 0));
@@ -179,8 +197,6 @@ private:
   int rows, cols;
   std::vector<std::vector<Node>> nodeGrid;
   std::vector<std::vector<int8_t>> map;
-  std::pair<int, int> robotPos;
-  std::pair<int, int> packagePos;
 };
 
 int main() {
@@ -205,6 +221,13 @@ int main() {
                (rows + dimBlock.y - 1) / dimBlock.y);
 
   initializeNodesKernel<<<dimGrid, dimBlock>>>(d_nodes, rows, cols);
+
+  cudaDeviceSynchronize();
+
+  int targetX = env.packagePos.first;
+  int targetY = env.packagePos.second;
+
+  aStarKernel<<<dimGrid, dimBlock>>>(d_nodes, rows, cols, targetX, targetY);
   cudaDeviceSynchronize();
 
   cudaFree(d_nodes);
