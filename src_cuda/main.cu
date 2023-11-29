@@ -1,6 +1,7 @@
 #include <cfloat>
 #include <cstdint>
 #include <cuda_runtime.h>
+#include <cuda_runtime_api.h>
 #include <fstream>
 #include <iostream>
 // #include <limits>
@@ -22,6 +23,21 @@ struct Node {
 
 __device__ float manhattanDistance(int x1, int y1, int x2, int y2) {
   return abs(x1 - x2) + abs(y1 - y2);
+}
+
+__global__ void initializeNodesKernel(Node *d_nodes, int rows, int cols) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int idy = blockIdx.y * blockDim.y + threadIdx.y;
+
+  if (idx < cols && idy < rows) {
+    int index = idy * cols + idx;
+    d_nodes[index].x = idx;
+    d_nodes[index].y = idy;
+    d_nodes[index].gCost = FLT_MAX;
+    d_nodes[index].hCost = FLT_MAX;
+    d_nodes[index].fCost = FLT_MAX;
+    d_nodes[index].parent = nullptr;
+  }
 }
 
 const int patternSize = 10;
@@ -175,6 +191,23 @@ int main() {
 
   env.positionRobotAndPackage();
   env.printRobotAndPackagePosition();
+
+  int rows = 500;
+  int cols = 500;
+  size_t size = rows * cols * sizeof(Node);
+
+  Node *d_nodes;
+  cudaMalloc(&d_nodes, size);
+
+  // Assuming a block size of 16x16, adjust as necessary
+  dim3 dimBlock(16, 16);
+  dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x,
+               (rows + dimBlock.y - 1) / dimBlock.y);
+
+  initializeNodesKernel<<<dimGrid, dimBlock>>>(d_nodes, rows, cols);
+  cudaDeviceSynchronize();
+
+  cudaFree(d_nodes);
 
   return 0;
 }
