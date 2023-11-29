@@ -1,12 +1,28 @@
+#include <cstdint>
+#include <cuda_runtime.h>
 #include <fstream>
 #include <iostream>
+// #include <limits>
+#include <cfloat>
 #include <random>
 #include <utility>
 #include <vector>
 
+// Node structure for A* algorithm
+struct Node {
+  int8_t x, y; // Coordinates
+  float gCost, hCost, fCost;
+  Node *parent;
+
+  // Constructor
+  Node()
+      : x(0), y(0), gCost(FLT_MAX), hCost(FLT_MAX), fCost(FLT_MAX),
+        parent(nullptr) {}
+};
+
 const int patternSize = 10;
 const int numPatterns = 4;
-int patterns[numPatterns][patternSize][patternSize] = {
+int8_t patterns[numPatterns][patternSize][patternSize] = {
     // pattern 1
     {{0, 0, 0, -1, 0, 0, -1, 0, 0, 0},
      {0, -1, 0, 0, -1, 0, 0, -1, 0, 0},
@@ -55,9 +71,16 @@ int patterns[numPatterns][patternSize][patternSize] = {
 
 class Environment {
 public:
+  // Environment(int rows, int cols) : rows(rows), cols(cols) {
+  //   map.resize(rows, std::vector<int>(cols, 0));
+  //   createWithPatterns();
+  // }
+
   Environment(int rows, int cols) : rows(rows), cols(cols) {
-    map.resize(rows, std::vector<int>(cols, 0));
+    map.resize(rows, std::vector<int8_t>(cols, 0));
+    nodeGrid.resize(rows, std::vector<Node>(cols));
     createWithPatterns();
+    initializeNodes();
   }
 
   void createWithPatterns() {
@@ -123,9 +146,19 @@ public:
               << packagePos.second << ")\n";
   }
 
+  void initializeNodes() {
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        nodeGrid[i][j].x = i;
+        nodeGrid[i][j].y = j;
+      }
+    }
+  }
+
 private:
   int rows, cols;
-  std::vector<std::vector<int>> map;
+  std::vector<std::vector<Node>> nodeGrid;
+  std::vector<std::vector<int8_t>> map;
   std::pair<int, int> robotPos;
   std::pair<int, int> packagePos;
 };
