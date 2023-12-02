@@ -4,7 +4,7 @@ import numpy as np
 
 
 def visualize_warehouse(warehouse, path=None):
-    fig, ax = plt.subplots(figsize=(10, 10))
+    fig, ax = plt.subplots(figsize=(20, 20))
 
     fig.patch.set_facecolor("#212121")
     ax.set_facecolor("#212121")
@@ -12,14 +12,23 @@ def visualize_warehouse(warehouse, path=None):
     # Convert the warehouse matrix into a numpy array
     warehouse_np = np.array(warehouse)
 
-    cmap = mcolors.ListedColormap(["#000000", "#212121"])
+    cmap = mcolors.ListedColormap(["#000000", "#282828"])
     ax.imshow(warehouse_np, cmap=cmap, aspect="equal")
 
     if path:
         # Unzip the path into x and y coordinates
         ys, xs = zip(*path)
         # A scatter plot for visualiation
-        ax.plot(xs, ys, "o-", color="#61afef", markersize=1, markeredgecolor="#61afef")
+        dimx, dimy = warehouse_np.shape
+
+        if dimx * dimy < 20000:
+            ax.plot(
+                xs, ys, "o-", color="#61afef", markersize=4, markeredgecolor="#61afef"
+            )
+        else:
+            ax.plot(
+                xs, ys, "o-", color="#61afef", markersize=0, markeredgecolor="#61afef"
+            )
 
         # Start point
         ax.text(xs[0], ys[0], "S", ha="center", va="center", color="white", fontsize=12)

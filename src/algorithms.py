@@ -9,6 +9,10 @@ from .environment import Environment
 DIRECTIONS = np.array([(0, 1), (1, 0), (0, -1), (-1, 0)])
 
 
+class HeuristicEnum(Enum):
+    MANHATTAN = "Manhattan distance on a square grid."
+
+
 class AlgorithmTypeEnum(Enum):
     """ """
 
@@ -21,10 +25,15 @@ class AlgorithmTypeEnum(Enum):
 class Search:
     """ """
 
-    def __init__(self, a_type: AlgorithmTypeEnum, environment: Environment):
+    def __init__(
+        self,
+        a_type: AlgorithmTypeEnum,
+        environment: Environment,
+        heuristic: HeuristicEnum,
+    ):
         """ """
 
-        self.environment = environment
+        self.env = environment
         self.algorithm = None
         self.a_type = a_type.value
         self.path = None
@@ -44,6 +53,9 @@ class Search:
         else:
             raise ValueError(f"Unknown AlgorithmType: {a_type}")
 
+        if heuristic is HeuristicEnum.MANHATTAN:
+            self._heuristic_type = self._heuristic_manhattan
+
         self._run()
 
         if self.path:
@@ -52,16 +64,30 @@ class Search:
             print("No path is available!")
 
     def print_cost(self):
-        print("Solution found with: ", self.cost, " cost")
-        print("Search Time: ", self.search_time)
-        print("Total Time: ", self.search_time + self.cost, " with ", self.a_type)
+        if self.env.n_packages == 1:
+            print("Cost to Package: ", self.cost, " units of time")
+            print("Solution found with cost of: ", self.cost * 2 + 2, " units of time")
+            print("Search Time: ", self.search_time, "seconds")
+            print(
+                "Total Time: ",
+                self.search_time + self.cost * 2 + 2,
+                "seconds (assuming unit of time is second)",
+                " with ",
+                self.a_type,
+            )
+        else:
+            print("Solution found with: ", self.cost, " cost")
+            print("Search Time: ", self.search_time)
+            print("Total Time: ", self.search_time + self.cost, " with ", self.a_type)
 
     def _run(self):
         """ """
         try:
             if self.algorithm:
                 s_t = time.time()
-                self.algorithm()
+                self.algorithm(
+                    self.env.package_positions[0], self.env.robot_positions[0]
+                )
                 e_t = time.time()
                 self.search_time = e_t - s_t
         except Exception as e:
@@ -76,15 +102,15 @@ class Search:
             return 3.0
         return 1.5
 
-    def _bfs_search(self):
+    def _bfs_search(self, goal_positions, start_positions):
         """Breadth Breadth First Search algorithm"""
 
-        rows, cols = self.environment.map.shape
-        queue = collections.deque([(self.environment.robot_pos, (0, 1), 0, [])])
+        rows, cols = self.env.map.shape
+        queue = collections.deque([(start_positions, (0, 1), 0, [])])
         visited = set()
-        visited.add(self.environment.robot_pos)
+        visited.add(start_positions)
 
-        goal = self.environment.package_pos
+        goal = goal_positions
         best_cost = float("inf")
         best_path = []
 
@@ -102,7 +128,7 @@ class Search:
                 if (
                     0 <= next_position[0] < rows
                     and 0 <= next_position[1] < cols
-                    and self.environment.map[next_position] != -1
+                    and self.env.map[next_position] != -1
                 ):
                     if next_position not in visited:
                         visited.add(next_position)
@@ -116,12 +142,12 @@ class Search:
         self.path = best_path
         self.cost = best_cost
 
-    def _dijkstra_search(self):
+    def _dijkstra_search(self, goal_positions, start_positions):
         """Perform Dijkstra's algorithm to find the lowest cost path"""
 
-        start = self.environment.robot_pos
-        goal = self.environment.package_pos
-        rows, cols = self.environment.map.shape
+        start = start_positions
+        goal = goal_positions
+        rows, cols = self.env.map.shape
 
         # Priority queue to hold nodes to visit with their priority (cost)
         queue = []
@@ -144,7 +170,7 @@ class Search:
                 if (
                     0 <= next_r < rows
                     and 0 <= next_c < cols
-                    and self.environment.map[next_r, next_c] != -1
+                    and self.env.map[next_r, next_c] != -1
                 ):
                     new_position = (next_r, next_c)
                     new_cost = current_cost + self._calculate_cost(
@@ -167,19 +193,24 @@ class Search:
                             ),
                         )
 
-    def _heuristic(self, a, b):
+    def _heuristic_manhattan(self, a, b):
         """
         Manhattan distance on a square grid Heuristic
         """
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
+    def _heuristic(self, a, b):
+        """
+        Manhattan distance on a square grid Heuristic
+        """
+        return self._heuristic_type(a, b)
 
-    def _a_star_search(self):
+    def _a_star_search(self, goal_positions, start_positions):
         """Perform A* search to find the best path"""
 
-        start = self.environment.robot_pos
-        goal = self.environment.package_pos
-        rows, cols = self.environment.map.shape
+        start = start_positions
+        goal = goal_positions
+        rows, cols = self.env.map.shape
         queue = []
         heapq.heappush(
             queue, (0 + self._heuristic(start, goal), 0, start, [(0, 1)], [])
@@ -199,7 +230,7 @@ class Search:
                 if (
                     0 <= next_r < rows
                     and 0 <= next_c < cols
-                    and self.environment.map[next_r, next_c] != -1
+                    and self.env.map[next_r, next_c] != -1
                 ):
                     new_cost = current_cost + self._calculate_cost(
                         direction[-1], new_dir
@@ -223,11 +254,11 @@ class Search:
                             ),
                         )
 
-    def _ida_star_search(self):
+    def _ida_star_search(self, goal_positions, start_positions):
         """Perform Iterative Deepening A* (IDA*) search to find the best path"""
 
-        start = self.environment.robot_pos
-        goal = self.environment.package_pos
+        start = start_positions
+        goal = goal_positions
 
         def search(path, g, bound):
             node = path[-1]
@@ -240,9 +271,9 @@ class Search:
             for new_dir in DIRECTIONS:
                 next_r, next_c = np.array(node) + new_dir
                 if (
-                    0 <= next_r < self.environment.map.shape[0]
-                    and 0 <= next_c < self.environment.map.shape[1]
-                    and self.environment.map[next_r, next_c] != -1
+                    0 <= next_r < self.env.map.shape[0]
+                    and 0 <= next_c < self.env.map.shape[1]
+                    and self.env.map[next_r, next_c] != -1
                     and (next_r, next_c) not in path
                 ):
                     path.append((next_r, next_c))
