@@ -40,3 +40,34 @@ def visualize_warehouse(warehouse, path=None):
     ax.grid(which="both", color="#212121", linestyle="-", linewidth=1)
 
     plt.show()
+
+
+def visualize_data(absolute_data, relative_data):
+    fig, ax = plt.subplots(figsize=(20, 20))
+    absolute_averages = {alg: np.mean(times) for alg, times in absolute_data.items()}
+    relative_averages = {alg: np.mean(times) for alg, times in relative_data.items()}
+
+    labels = list(absolute_data.keys())
+    x = np.arange(len(labels))
+    absolute_averages_list = [absolute_averages[alg] for alg in labels]
+
+    bars = ax.bar(x, absolute_averages_list, color=["blue", "green", "red", "purple"])
+
+    ax.set_xlabel("Algorithm")
+    ax.set_ylabel("Average Total Search Time (Seconds)")
+    ax.set_title("Average Performance of Algorithms Over Iterations")
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+
+    # Adding both absolute and relative values on top of the bars
+    for bar in bars:
+        absolute_height = bar.get_height()
+        alg = labels[bars.index(bar)]
+        relative_height = relative_averages[alg]
+        ax.annotate(f'{absolute_height:.2f}s\n({relative_height:.2f}%)',
+                    xy=(bar.get_x() + bar.get_width() / 2, absolute_height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha='center', va='bottom')
+
+    plt.show()

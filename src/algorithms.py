@@ -3,6 +3,7 @@ import collections
 import numpy as np
 import time
 import heapq
+import math
 
 from .environment import Environment
 
@@ -11,6 +12,7 @@ DIRECTIONS = np.array([(0, 1), (1, 0), (0, -1), (-1, 0)])
 
 class HeuristicEnum(Enum):
     MANHATTAN = "Manhattan distance on a square grid."
+    EUCLIDEAN = "Euclidian distance on a square grid"
 
 
 class AlgorithmTypeEnum(Enum):
@@ -55,10 +57,14 @@ class Search:
 
         if heuristic is HeuristicEnum.MANHATTAN:
             self._heuristic_type = self._heuristic_manhattan
+        elif heuristic is HeuristicEnum.EUCLIDEAN:
+            self._heuristic_type = self._heuristic_euclidean
 
         self._run()
 
-        if self.path:
+        if self.path and self.env.n_packages == 1:
+            self.total_search_time = self.search_time + self.cost * 2 + 2
+        elif self.path and self.env.n_packages > 1:
             self.total_search_time = self.search_time + self.cost
         else:
             print("No path is available!")
@@ -149,17 +155,14 @@ class Search:
         goal = goal_positions
         rows, cols = self.env.map.shape
 
-        # Priority queue to hold nodes to visit with their priority (cost)
         queue = []
-        heapq.heappush(queue, (0, start, [(0, 1)], []))  # Initial cost is 0
+        heapq.heappush(queue, (0, start, [(0, 1)], []))
 
-        # Dictionary to track the best cost to reach each node
         cost_so_far = {start: 0}
 
         while queue:
             current_cost, (r, c), direction, path = heapq.heappop(queue)
 
-            # If goal is reached, set the path and cost and return
             if (r, c) == goal:
                 self.path = path + [(r, c)]
                 self.cost = current_cost
@@ -177,7 +180,6 @@ class Search:
                         direction[-1], new_dir
                     )
 
-                    # Check if new path is cheaper or node hasn't been visited
                     if (
                         new_position not in cost_so_far
                         or new_cost < cost_so_far[new_position]
@@ -198,6 +200,12 @@ class Search:
         Manhattan distance on a square grid Heuristic
         """
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+    def _heuristic_euclidean(self, a, b):
+        """
+        Euclidean distance on a square grid Heuristic.
+        """
+        return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
 
     def _heuristic(self, a, b):
         """

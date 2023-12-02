@@ -51,20 +51,20 @@ class Environment:
         if save_fn:
             self._save_to_file(save_fn)
 
-    @staticmethod
-    def load_from_file(filename):
-        """Load the environment map from a file and set attributes dynamically."""
-        with open(filename, "r") as file:
-            map_data = np.loadtxt(file, delimiter=",", dtype=np.int8)
-
-        env = Environment(WarehouseTypeEnum.Regular, *map_data.shape)
-        env.map = map_data
-        env.rows, env.cols = map_data.shape
-
-        free_spaces = np.argwhere(env.map == 0)
-        env.robot_pos, env.package_pos = map(tuple, random.sample(list(free_spaces), 2))
-
-        return env
+    # @staticmethod
+    # def load_from_file(filename):
+    #     """Load the environment map from a file and set attributes dynamically."""
+    #     with open(filename, "r") as file:
+    #         map_data = np.loadtxt(file, delimiter=",", dtype=np.int8)
+    #
+    #     env = Environment(WarehouseTypeEnum.Regular, *map_data.shape)
+    #     env.map = map_data
+    #     env.rows, env.cols = map_data.shape
+    #
+    #     free_spaces = np.argwhere(env.map == 0)
+    #     env.robot_pos, env.package_pos = map(tuple, random.sample(list(free_spaces), 2))
+    #
+    #     return env
 
     def _place_robots(self):
         """Place multiple robots at random locations."""
