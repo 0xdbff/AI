@@ -4,7 +4,7 @@ import numpy as np
 import time
 import heapq
 import math
-
+from typing import Optional
 from .environment import Environment
 
 DIRECTIONS = np.array([(0, 1), (1, 0), (0, -1), (-1, 0)])
@@ -25,18 +25,64 @@ class AlgorithmTypeEnum(Enum):
 
 
 class Search:
-    """ """
+    """
+    Implements various search algorithms for pathfinding in a given environment.
+
+    Supports BFS, Dijkstra's, A*, and IDA* algorithms with Manhattan or Euclidean heuristics.
+
+    Attributes:
+        env (Environment): The environment where the search is performed.
+        algorithm (callable): The selected search algorithm.
+        a_type (AlgorithmTypeEnum): The type of the selected algorithm.
+        path (list): The path found by the search algorithm.
+        total_search_time (float): The total time taken for the search and path traversal.
+
+    Methods:
+        print_cost():
+            Prints the cost of the path found, search time, and other relevant details.
+
+        solve_tsp(package_locations):
+            A static method for solving the Traveling Salesman Problem using a greedy approach.
+
+        _run():
+            Runs the selected search algorithm to find a path in the environment.
+
+        _calculate_cost(current_dir, new_dir):
+            Calculates the cost of moving from one direction to another.
+
+        _bfs_search(goal_positions, start_positions):
+            Breadth First Search algorithm.
+
+        _dijkstra_search(goal_positions, start_positions):
+            Dijkstra's algorithm.
+
+        _heuristic_manhattan(a, b):
+            Calculates Manhattan distance between two points.
+
+        _heuristic_euclidean(a, b):
+            Calculates Euclidean distance between two points.
+
+        _heuristic(a, b):
+            Wrapper for the selected heuristic function.
+
+        _a_star_search(goal_positions, start_positions):
+            A* search algorithm.
+
+        _ida_star_search(goal_positions, start_positions):
+            IDA* search algorithm.
+
+    Raises:
+        ValueError: If an unknown algorithm type is specified.
+    """
 
     def __init__(
         self,
         a_type: AlgorithmTypeEnum,
         environment: Environment,
-        heuristic: HeuristicEnum,
+        heuristic: Optional[HeuristicEnum] = None,
     ):
-        """ """
-
         self.env = environment
-        self.algorithm = None
+        self.algorithm = self._a_star_search
         self.a_type = a_type.value
         self.path = None
 
@@ -70,38 +116,84 @@ class Search:
             print("No path is available!")
 
     def print_cost(self):
-        if self.env.n_packages == 1:
-            print("Cost to Package: ", self.cost, " units of time")
-            print("Solution found with cost of: ", self.cost * 2 + 2, " units of time")
-            print("Search Time: ", self.search_time, "seconds")
-            print(
-                "Total Time: ",
-                self.search_time + self.cost * 2 + 2,
-                "seconds (assuming unit of time is second)",
-                " with ",
-                self.a_type,
-            )
+        if self.path:
+            if self.env.n_packages == 1:
+                print("Cost to Package: ", self.cost, " units of time")
+                print(
+                    "Solution found with cost of: ", self.cost * 2 + 2, " units of time"
+                )
+                print("Search Time: ", self.search_time, "seconds")
+                print(
+                    "Total Time: ",
+                    self.search_time + self.cost * 2 + 2,
+                    "seconds (assuming unit of time is second)",
+                    " with ",
+                    self.a_type,
+                )
+            else:
+                print("Solution found with: ", self.cost, " cost")
+                print("Search Time: ", self.search_time)
+                print(
+                    "Total Time: ", self.search_time + self.cost, " with ", self.a_type
+                )
         else:
-            print("Solution found with: ", self.cost, " cost")
-            print("Search Time: ", self.search_time)
-            print("Total Time: ", self.search_time + self.cost, " with ", self.a_type)
+            raise ValueError("No path available!")
+
+    @staticmethod
+    def solve_tsp(package_locations):
+        # Basic implementation using a greedy nearest-neighbor approach
+        if not package_locations:
+            return []
+
+        start = package_locations[0]
+        unvisited = set(package_locations)
+        path = [start]
+        unvisited.remove(start)
+
+        while unvisited:
+            nearest = min(
+                unvisited,
+                key=lambda loc: np.linalg.norm(np.array(path[-1]) - np.array(loc)),
+            )
+            path.append(nearest)
+            unvisited.remove(nearest)
+
+        return path
 
     def _run(self):
-        """ """
         try:
-            if self.algorithm:
-                s_t = time.time()
-                self.algorithm(
+            s_t = time.time()
+            total_path = []
+            total_cost = 0
+
+            if self.env.n_packages > 1:
+                package_order = Search.solve_tsp(self.env.package_positions)
+                current_position = self.env.robot_positions[0]
+
+                for goal_position in package_order:
+                    path, cost = self.algorithm(current_position, goal_position)
+                    total_path.extend(path)
+                    total_cost += cost
+                    current_position = goal_position
+
+                path, cost = self.algorithm(
+                    current_position, self.env.robot_positions[0]
+                )
+                total_path.extend(path)
+                total_cost += cost
+
+                self.path = total_path
+                self.cost = total_cost
+            else:
+                self.path, self.cost = self.algorithm(
                     self.env.package_positions[0], self.env.robot_positions[0]
                 )
-                e_t = time.time()
-                self.search_time = e_t - s_t
+            e_t = time.time()
+            self.search_time = e_t - s_t
         except Exception as e:
             print(e)
 
     def _calculate_cost(self, current_dir, new_dir):
-        """ """
-
         if (current_dir == new_dir).all():
             return 1.0
         elif (current_dir == -new_dir).all():
@@ -109,8 +201,6 @@ class Search:
         return 1.5
 
     def _bfs_search(self, goal_positions, start_positions):
-        """Breadth Breadth First Search algorithm"""
-
         rows, cols = self.env.map.shape
         queue = collections.deque([(start_positions, (0, 1), 0, [])])
         visited = set()
@@ -124,7 +214,6 @@ class Search:
             position, direction, cost, path = queue.popleft()
             r, c = position
 
-            # Check for goal state
             if position == goal and cost < best_cost:
                 best_cost = cost
                 best_path = path + [position]
@@ -145,12 +234,9 @@ class Search:
                             (next_position, new_dir, new_cost, path + [position])
                         )
 
-        self.path = best_path
-        self.cost = best_cost
+        return best_path, best_cost
 
     def _dijkstra_search(self, goal_positions, start_positions):
-        """Perform Dijkstra's algorithm to find the lowest cost path"""
-
         start = start_positions
         goal = goal_positions
         rows, cols = self.env.map.shape
@@ -164,9 +250,7 @@ class Search:
             current_cost, (r, c), direction, path = heapq.heappop(queue)
 
             if (r, c) == goal:
-                self.path = path + [(r, c)]
-                self.cost = current_cost
-                return
+                return path + [(r, c)], current_cost
 
             for new_dir in DIRECTIONS:
                 next_r, next_c = np.array([r, c]) + new_dir
@@ -196,26 +280,15 @@ class Search:
                         )
 
     def _heuristic_manhattan(self, a, b):
-        """
-        Manhattan distance on a square grid Heuristic
-        """
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
     def _heuristic_euclidean(self, a, b):
-        """
-        Euclidean distance on a square grid Heuristic.
-        """
         return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
 
     def _heuristic(self, a, b):
-        """
-        Manhattan distance on a square grid Heuristic
-        """
         return self._heuristic_type(a, b)
 
     def _a_star_search(self, goal_positions, start_positions):
-        """Perform A* search to find the best path"""
-
         start = start_positions
         goal = goal_positions
         rows, cols = self.env.map.shape
@@ -229,9 +302,7 @@ class Search:
             _, current_cost, (r, c), direction, path = heapq.heappop(queue)
 
             if (r, c) == goal:
-                self.path = path + [(r, c)]
-                self.cost = current_cost
-                return
+                return path + [(r, c)], current_cost
 
             for new_dir in DIRECTIONS:
                 next_r, next_c = np.array([r, c]) + new_dir
@@ -263,8 +334,6 @@ class Search:
                         )
 
     def _ida_star_search(self, goal_positions, start_positions):
-        """Perform Iterative Deepening A* (IDA*) search to find the best path"""
-
         start = start_positions
         goal = goal_positions
 
@@ -301,8 +370,7 @@ class Search:
         while True:
             t = search(path, 0, bound)
             if t is True:
-                self.path = path[:]
-                self.cost = sum(
+                return path[:], sum(
                     [
                         self._calculate_cost(
                             np.array(DIRECTIONS[-1]), np.array(DIRECTIONS[i % 4])
@@ -310,8 +378,6 @@ class Search:
                         for i in range(len(path) - 1)
                     ]
                 )
-                return
             if t == float("inf"):
-                self.path = None
-                return
+                return None, float("inf")
             bound = t
