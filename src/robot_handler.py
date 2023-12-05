@@ -47,8 +47,8 @@ class MultiRobotHandler:
         # assigned.
         return (
             sum(abs(a - b) for a, b in zip(robot_position, package_position)) *
-            0.7
-        ) + len(assigned_tasks) * 2
+            0.9
+        ) + (len(assigned_tasks) * (self.env.rows * 0.01))
 
     def allocate_tasks(self):
         allocations = [[] for _ in range(self.env.n_robots)]
